@@ -1,0 +1,24 @@
+diff --git a/lib/Perlbal/ClientProxy.pm b/lib/Perlbal/ClientProxy.pm
+index 4b261aa..66b89fe 100644
+--- a/lib/Perlbal/ClientProxy.pm
++++ b/lib/Perlbal/ClientProxy.pm
+@@ -48,6 +48,7 @@ use fields (
+ 
+             # error-retrying stuff
+             'retry_count',         # number of times we've retried this request so far after getting 500 errors
++            'complete_start_proxy_request',
+             );
+ 
+ use constant READ_SIZE         => 131072;    # 128k, ~common TCP window size?
+@@ -744,7 +745,10 @@ sub handle_request {
+ 
+     my $svc = $self->{service};
+     # give plugins a chance to force us to bail
+-    return if $svc->run_hook('start_proxy_request', $self);
++    unless ( $self->{complete_start_proxy_request} ) {
++        return if $svc->run_hook('start_proxy_request', $self);
++    }
++    $self->{complete_start_proxy_request} = 0;
+     return if $svc->run_hook('start_http_request',  $self);
+ 
+     if ($self->handle_chunked_upload) {
